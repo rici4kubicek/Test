@@ -13,17 +13,31 @@ def get_exchange_rates():
     Returns EUR/CZK and USD/CZK rates
     """
     try:
-        # CNB provides daily exchange rates in a simple text format
-        url = "https://www.cnb.cz/en/financial_markets/foreign_exchange_market/central_bank_exchange_rate_fixing/daily.txt"
+        # Try the Czech CNB endpoint for daily exchange rates
+        urls = [
+            "https://www.cnb.cz/cs/financni_trhy/devizovy_trh/kurzy_deviz/denni_kurz.txt",
+            "https://www.cnb.cz/en/financial_markets/foreign_exchange_market/central_bank_exchange_rate_fixing/daily.txt"
+        ]
         
-        with urllib.request.urlopen(url, timeout=10) as response:
-            content = response.read().decode('utf-8')
+        content = None
+        for url in urls:
+            try:
+                with urllib.request.urlopen(url, timeout=10) as response:
+                    content = response.read().decode('utf-8')
+                logger.info(f"Successfully fetched from: {url}")
+                break
+            except Exception as e:
+                logger.info(f"Failed to fetch from {url}: {str(e)}")
+                continue
+        
+        if not content:
+            raise Exception("Failed to fetch exchange rates from CNB")
         
         rates = {}
         lines = content.strip().split('\n')
         
         # Parse the CNB format
-        # Header lines contain date info
+        # Header lines contain date info (starting with #)
         # Data lines format: Country|Currency|Amount|Code|Rate
         for line in lines:
             if not line or line.startswith('#'):
@@ -31,19 +45,28 @@ def get_exchange_rates():
             
             parts = line.split('|')
             if len(parts) >= 5:
-                country = parts[0].strip()
-                currency = parts[1].strip()
-                amount = int(parts[2].strip())
-                code = parts[3].strip()
-                rate = float(parts[4].strip())
-                
-                # Calculate rate per 1 unit
-                rate_per_unit = rate / amount
-                
-                if code == 'EUR':
-                    rates['EUR/CZK'] = round(rate_per_unit, 4)
-                elif code == 'USD':
-                    rates['USD/CZK'] = round(rate_per_unit, 4)
+                try:
+                    country = parts[0].strip()
+                    currency = parts[1].strip()
+                    amount = int(parts[2].strip())
+                    code = parts[3].strip()
+                    rate = float(parts[4].replace(',', '.').strip())
+                    
+                    # Calculate rate per 1 unit
+                    rate_per_unit = rate / amount
+                    
+                    if code == 'EUR':
+                        rates['EUR/CZK'] = round(rate_per_unit, 4)
+                        logger.info(f"Found EUR rate: {rate_per_unit}")
+                    elif code == 'USD':
+                        rates['USD/CZK'] = round(rate_per_unit, 4)
+                        logger.info(f"Found USD rate: {rate_per_unit}")
+                except (ValueError, IndexError) as e:
+                    logger.debug(f"Error parsing line: {line} - {str(e)}")
+                    continue
+        
+        if not rates:
+            raise Exception("No exchange rates found in CNB data")
         
         return rates
     
