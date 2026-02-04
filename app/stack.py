@@ -12,11 +12,11 @@ class LambdaStack(cdk.Stack):
         # Create Lambda function
         lambda_function = lambda_.Function(
             self,
-            "HelloWorldFunction",
+            "ExchangeRateFetcher",
             runtime=lambda_.Runtime.PYTHON_3_12,
             handler="index.handler",
             code=lambda_.Code.from_asset(os.path.join(os.path.dirname(__file__), "../lambda")),
-            description="Lambda function to fetch EUR/CZK and USD/CZK exchange rates from CNB",
+            description="Fetches current EUR/CZK and USD/CZK exchange rates from CNB",
             timeout=cdk.Duration.seconds(30),
             memory_size=128,
         )
@@ -25,7 +25,7 @@ class LambdaStack(cdk.Stack):
         # Cron expression: 0 16 * * ? *  (16:00 UTC every day)
         rule = events.Rule(
             self,
-            "DailyExchangeRateRule",
+            "DailyExchangeRateTrigger",
             schedule=events.Schedule.cron(
                 hour="16",
                 minute="0",
@@ -33,7 +33,7 @@ class LambdaStack(cdk.Stack):
                 month="*",
                 week_day="*",
             ),
-            description="Trigger exchange rate Lambda function daily at 16:00 UTC",
+            description="Daily trigger for CNB exchange rate fetcher at 16:00 UTC",
         )
 
         # Add Lambda function as target
@@ -42,17 +42,17 @@ class LambdaStack(cdk.Stack):
         # Output the function name
         cdk.CfnOutput(
             self,
-            "LambdaFunctionName",
-            value=lambda_function.function_name,
-            description="Name of the Lambda function",
-            export_name="LambdaFunctionName",
+            "ExchangeRateFetcherArn",
+            value=lambda_function.function_arn,
+            description="ARN of the ExchangeRateFetcher Lambda function",
+            export_name="ExchangeRateFetcherArn",
         )
 
         # Output the EventBridge rule
         cdk.CfnOutput(
             self,
-            "EventBridgeRuleName",
+            "DailyExchangeRateTriggerName",
             value=rule.rule_name,
-            description="Name of the EventBridge rule",
-            export_name="EventBridgeRuleName",
+            description="Name of the daily exchange rate trigger rule",
+            export_name="DailyExchangeRateTriggerName",
         )
