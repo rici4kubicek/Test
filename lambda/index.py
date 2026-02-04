@@ -13,10 +13,9 @@ def get_exchange_rates():
     Returns EUR/CZK and USD/CZK rates
     """
     try:
-        # Try the Czech CNB endpoint for daily exchange rates
+        # Use the official CNB daily exchange rates URL
         urls = [
-            "https://www.cnb.cz/cs/financni_trhy/devizovy_trh/kurzy_deviz/denni_kurz.txt",
-            "https://www.cnb.cz/en/financial_markets/foreign_exchange_market/central_bank_exchange_rate_fixing/daily.txt"
+            "https://www.cnb.cz/cs/financni-trhy/devizovy-trh/kurzy-devizoveho-trhu/kurzy-devizoveho-trhu/denni_kurz.txt",
         ]
         
         content = None
