@@ -1,0 +1,5 @@
+{
+  "name": "aws-cdk-lambda",
+  "version": "1.0.0",
+  "description": "AWS CDK Lambda project in Python"
+}

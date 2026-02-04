@@ -1,0 +1,5 @@
+{
+  "app": "python -m app",
+  "context": {},
+  "output": "cdk.out"
+}
